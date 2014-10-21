@@ -36,6 +36,7 @@ function save_options () {
 
     status.innerHTML = status2.innerHTML = "Saving Options";
 
+    // todo - need to save these to the bg.plugin object
     chrome.storage.sync.set({
         'seconds': seconds,
         'reload': reload,
