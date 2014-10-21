@@ -1,15 +1,24 @@
 // Global Variables - When possible pulling form Local Storage set via Options page.
-chrome.storage.sync.get(['seconds', 'reload', 'inactive', 'autostart', 'noRefreshList'], init);
+chrome.storage.sync.get(['seconds', 'reload', 'inactive', 'autostart', 'noRefreshList', 'reloadTabIds'], init);
 
 var plugin = undefined;
 function init (settings) {
 	settings.currentWindow = chrome.windows.WINDOW_ID_CURRENT;
 	plugin = new ReloadPlugin(settings);
-}
 
-// Setup Initial Badge Text
-var badgeColor = [139,137,137,137];
-chrome.browserAction.setBadgeBackgroundColor({color: badgeColor});
+	// Setup Initial Badge Text
+	var badgeColor = [139,137,137,137];
+	chrome.browserAction.setBadgeBackgroundColor({color: badgeColor});
+
+	chrome.browserAction.onClicked.addListener(function () {
+		if (plugin.isGoing) {
+			plugin.stop();
+		}
+		else {
+			plugin.start();
+		}
+	});
+}
 
 
 // function getLocalStorageVal(key, defVal) {

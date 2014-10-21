@@ -1,12 +1,13 @@
 var ReloadPlugin = function (settings) {
   var self = this;
   self.activeWindows = new Array();
-  self.timeDelay = settings.seconds || 10000;
+  self.timeDelay = settings.seconds || 10;
   self.tabReload = settings.reload || true;
   self.tabInactive = settings.inactive || false;
   self.tabAutostart = settings.autostart || false;
   self.noRefreshList = settings.noRefreshList || [];
   self.currentWindow = settings.currentWindow;
+  self.reloadTabIds = settings.reloadTabIds || [];
 
   chrome.tabs.onActivated.addListener(function (activeInfo) {
     chrome.tabs.get(activeInfo.tabId, function (t) {
@@ -32,6 +33,7 @@ ReloadPlugin.prototype.stop = function () {
   var self = this;
   self.isGoing = false;
   self.updateBadge('');
+  clearTimeout(self.timer);
 };
 
 ReloadPlugin.prototype.updateBadge = function (status) {
@@ -58,7 +60,7 @@ ReloadPlugin.prototype.startTimer = function () {
   clearTimeout(self.timer);
   self.timer = setTimeout(function () {
     self.loadNextTab();
-  }, self.timeDelay);
+  }, self.timeDelay * 1000);
 };
 
 ReloadPlugin.prototype.getActiveTab = function (cb) {
@@ -88,6 +90,12 @@ ReloadPlugin.prototype.loadNextTab = function () {
   });
 };
 
+ReloadPlugin.prototype.shouldReloadTab = function (id) {
+  var self = this;
+  return (self.tabReload && self.reloadTabIds.length === 0)
+        || (self.reloadTabIds.indexOf(id) > -1);
+};
+
 ReloadPlugin.prototype.activateTab = function (tab) {
   var self = this;
   function setTabActive () {
@@ -95,7 +103,7 @@ ReloadPlugin.prototype.activateTab = function (tab) {
       self.startTimer();
     });
   }
-  if (self.tabReload) {
+  if (self.shouldReloadTab(tab.id)) {
     chrome.tabs.onUpdated.addListener(function tabLoadComplete (tabId, info, t) {
       if (info.status === "complete") {
         chrome.tabs.onUpdated.removeListener(tabLoadComplete);
