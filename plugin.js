@@ -92,6 +92,7 @@ ReloadPlugin.prototype.loadNextTab = function () {
 
 ReloadPlugin.prototype.shouldReloadTab = function (id) {
   var self = this;
+  console.log("should reload", self.tabReload, self.reloadTabIds.length, self.reloadTabIds.indexOf(id), id);
   return (self.tabReload && self.reloadTabIds.length === 0)
         || (self.reloadTabIds.indexOf(id) > -1);
 };
