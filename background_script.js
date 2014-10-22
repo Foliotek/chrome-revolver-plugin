@@ -1,165 +1,73 @@
-// Global Variables - When possible pulling form Local Storage set via Options page.
-chrome.storage.sync.get(['seconds', 'reload', 'inactive', 'autostart', 'noRefreshList', 'reloadTabIds'], init);
+var settings = ['seconds', 
+  'reload', 
+  'inactive', 
+  'autostart', 
+  'noRefreshList', 
+  'reloadTabIds'
+];
+var instances = { };
+var currentWindow = -2;
+var globalConfig;
 
-var plugin = undefined;
-function init (settings) {
-	settings.currentWindow = chrome.windows.WINDOW_ID_CURRENT;
-	plugin = new ReloadPlugin(settings);
-
-	// Setup Initial Badge Text
-	var badgeColor = [139,137,137,137];
-	chrome.browserAction.setBadgeBackgroundColor({color: badgeColor});
-
-	chrome.browserAction.onClicked.addListener(function () {
-		if (plugin.isGoing) {
-			plugin.stop();
-		}
-		else {
-			plugin.start();
-		}
-	});
+function getInstance (windowId) {
+  return instances[windowId.toString()];
 }
 
+function activeWindowChange (id) {
+  currentWindow = id;
+  updateBadgeForInstance(getInstance(id));
+}
 
-// function getLocalStorageVal(key, defVal) {
-// 	return (typeof localStorage[key]) === "undefined" ? defVal : (localStorage[key] === 'true');
-// }
+function init (config) {
+  globalConfig = config;
+  chrome.windows.getAll(function (windows) {
+    [].forEach.call(windows, function (win) {
+      var p = instances[win.id.toString()] = new ReloadPlugin(config);
+      p.currentWindow = win.id;
 
-// var tabReload = getLocalStorageVal("reload", true);
-// var tabInactive = getLocalStorageVal("inactive", false);
-// var tabAutostart = getLocalStorageVal("autostart", false);
+      if (win.focused) {
+        activeWindowChange(win.id);
+      }
+    });
+  });
 
-// var noRefreshList = [];
-// if (localStorage["noRefreshList"]) {
-// 	noRefreshList = JSON.parse(localStorage["noRefreshList"]);
-// }
+  var badgeColor = [139,137,137,137];
+  chrome.browserAction.setBadgeBackgroundColor({color: badgeColor});
+}
 
-// function include(arr,obj) {
-//     return (arr.indexOf(obj) != -1);
-// }
+function updateBadgeForInstance (inst) {
+  if (inst && inst.isGoing) {
+    chrome.browserAction.setBadgeText({text:"\u2022"});
+    chrome.browserAction.setBadgeBackgroundColor({color:[0,255,0,100]});
+    chrome.browserAction.setTitle({title: 'Revolver - Enabled'});
+  }
+  else {
+    chrome.browserAction.setBadgeText({text:"\u00D7"});
+    chrome.browserAction.setBadgeBackgroundColor({color:[255,0,0,100]});
+    chrome.browserAction.setTitle({title: 'Revolver - Disabled'});
+  }
+}
 
-// activeWindows = new Array();
-// function activeInWindow(windowId)
-// {
-// 	for (i in activeWindows) {
-// 		if (activeWindows[i] == windowId) {
-// 			return true;
-// 		}
-// 	}
-// }
+chrome.storage.sync.get(settings, init);
+chrome.browserAction.onClicked.addListener(function () {
+  chrome.windows.getCurrent(function (win) {
+    var instance = getInstance(win.id);
+    if (instance.isGoing) {
+      instance.stop();
+    }
+    else {
+      instance.start();
+    }
+    updateBadgeForInstance(instance);
+  });
+});
 
-
-// // Called when the user clicks on the browser action.
-// chrome.browserAction.onClicked.addListener(function(tab) {
-// 	var windowId = tab.windowId
-// 	if (activeInWindow(windowId)) {
-// 		stop(windowId);
-// 	} else {
-// 		go(windowId);
-// 	}
-// });	
-
-// function badgeTabs(windowId, text) {
-// 	chrome.tabs.getAllInWindow(windowId, function(tabs) {
-// 		for(i in tabs) {
-// 			switch (text)
-// 			{
-// 			case 'on':
-// 			  chrome.browserAction.setBadgeText({text:"\u2022"});
-// 			  chrome.browserAction.setBadgeBackgroundColor({color:[0,255,0,100]});
-// 			  break;
-// 			case '':
-// 			  chrome.browserAction.setBadgeText({text:"\u00D7"});
-// 			  chrome.browserAction.setBadgeBackgroundColor({color:[255,0,0,100]});
-// 			  break;
-// 			default:
-// 			  chrome.browserAction.setBadgeText({text:""});
-// 			}
-// 		}	
-// 	});
-// }
-
-// // Start on a specific window
-// function go(windowId) {
-// 	if (localStorage["seconds"]) { timeDelay = (localStorage["seconds"]*1000);}
-// 	moverInteval = setInterval(function() { moveTabIfIdle() }, timeDelay);
-//         console.log('Starting: timeDelay:'+timeDelay+' reload:'+tabReload+' inactive:'+tabInactive);
-// 	activeWindows.push(windowId);
-// 	badgeTabs(windowId, 'on');
-// }
-
-// // Stop on a specific window
-// function stop(windowId) {
-// 	clearInterval(moverInteval);
-//         console.log('Stopped.');
-// 	var index = activeWindows.indexOf(windowId);
-// 	if(index >= 0) {
-// 		activeWindows.splice(index);
-// 		badgeTabs(windowId, '');
-// 	}
-// }
-
-// // Switch Tab URL functionality.
-// function activateTab(tab) {
-// 	if (tabReload && !include(noRefreshList, tab.url)) {
-// 		// Trigger a reload
-// 		chrome.tabs.update(tab.id, {url: tab.url, selected: tab.selected}, null);
-// 		// Add a callback to swich tabs after the reload is complete
-// 		chrome.tabs.onUpdated.addListener(
-// 			function activateTabCallback( tabId , info ) {
-// 		    	if ( info.status == "complete" && tabId == tab.id) {
-// 					chrome.tabs.onUpdated.removeListener(activateTabCallback);
-// 		        	chrome.tabs.update(tabId, {selected: true});
-// 		    	}
-// 			});
-// 	} else {
-// 		// Swich Tab right away
-// 		chrome.tabs.update(tab.id, {selected: true});
-// 	}
-// }
-
-// // Call moveTab if the user isn't actually interacting with the browser
-// function moveTabIfIdle() {
-// 	if (tabInactive) {
-// 		// 15 is the lowest allowable number of seconds for this call
-// 		// If you try lower, Chrome complains
-// 		chrome.idle.queryState(15, function(state) {
-// 			if(state == 'idle') {
-// 				moveTab();
-// 			} else {
-// 				//Set "wait" color and log.
-// 				chrome.browserAction.setBadgeText({text:"\u2022"});
-// 				chrome.browserAction.setBadgeBackgroundColor({color:[0,0,255,100]});
-// 				console.log('Browser was active, waiting.');
-// 			}
-// 		});
-// 	} else {
-// 		moveTab();
-// 	}
-// }
-
-// // Switches to next URL in manifest, re-requests feed if at end of manifest.
-// function moveTab() {
-// 	for(i in activeWindows) {
-// 		windowId = activeWindows[i];
-// 		badgeTabs(windowId, 'on');
-// 		chrome.tabs.getSelected(windowId, function(currentTab){
-// 			chrome.tabs.getAllInWindow(currentTab.windowId, function(tabs) {
-// 				nextTabIndex = 0;
-// 				if(currentTab.index + 1 < tabs.length) {
-// 					nextTabIndex = currentTab.index + 1;
-// 				}
-// 				activateTab(tabs[nextTabIndex]);
-// 			});
-// 		});
-// 	}
-// }
-//Autostart function, procesed on initial startup.
-// if(tabAutostart) {
-// 	chrome.tabs.query({'active': true, 'windowId': chrome.windows.WINDOW_ID_CURRENT},
-// 		function(tabs){
-// 			//Start Revolver Tabs in main window.
-// 			go(tabs[0].windowId);
-// 		}
-// 	);
-// }
+chrome.windows.onFocusChanged.addListener(activeWindowChange);
+chrome.windows.onCreated.addListener(function (win) {
+  var i = instances[win.id.toString()] = new ReloadPlugin(globalConfig);
+  i.currentWindow = win.id;
+});
+chrome.windows.onRemoved.addListener(function (id) {
+  instances[id.toString()].destroy();
+  delete instances[id.toString()];
+});
