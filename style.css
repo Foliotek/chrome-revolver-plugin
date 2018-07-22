@@ -1,0 +1,95 @@
+body {
+  font-family: arial, sans-serif;
+  margin: 2em;
+  background-color: #f1f1f1;
+}
+
+div#topline {
+  background-image: url('revolver_t_48.png');
+  background-repeat: no-repeat;
+  padding: 0 5px 5px 55px;
+}
+
+h1 {
+  margin: 0;
+  padding: 0;
+  letter-spacing: -2px;
+}
+
+span.byline {
+  font-size: .7em;
+  color: #999;
+}
+
+span.byline a {
+  color: #777;
+}
+
+input {
+  font-size: .8em;
+  border: 1px solid #ccc;
+  padding: 3px;
+}
+
+input.enable {
+  margin: 0 1em 0 0;
+  text-align: right
+}
+
+input.url-text {
+  width: 60em;
+}
+
+label {
+  font-size: .8em;
+}
+
+label.inline {
+  margin: 0 0 0 5em
+}
+
+label.label-close {
+  margin: 0 0 0 0.2em
+}
+
+span.example {
+  font-size: .7em;
+  color: #999;
+  display: block;
+}
+
+div#settings, div#adv-settings {
+  margin: 1em 2em;
+  background-color: #ffffff;
+  border: 1px solid #ccc;
+  border-radius: 10px 10px;
+  padding: 10px 30px 30px 30px;
+}
+
+div#settings p, div#adv-settings p {
+  border-bottom: 1px dotted #ccc;
+  padding-bottom: 3px;
+}
+
+span#status, span#status3 {
+  color: #ff6103;
+  padding: 0 1em;
+  font-weight: bold;
+  font-size: 10px;
+}
+
+div.saveheader {
+  margin: .5em 2em .5em 0;
+  text-align: right;
+}
+
+p.thanks {
+  font-size: .8em;
+  margin: 2em 0;
+}
+
+img.icon {
+  height: 15px;
+  width: 15px;
+  margin-right: 5px
+}
